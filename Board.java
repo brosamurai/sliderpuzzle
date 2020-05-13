@@ -7,6 +7,8 @@
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Stack;
 
+import java.util.Arrays;
+
 public class Board {
     private int missingTileX;
     private int missingTileY;
@@ -21,6 +23,10 @@ public class Board {
         findMissingTile();
     }
 
+    private int[][] getCurrentBoard() {
+        return currentBoard;
+    }
+
     private void findMissingTile() {
         for (int i = 0; i < currentBoard.length; i++) {
             for (int j = 0; j < currentBoard.length; j++) {
@@ -31,7 +37,6 @@ public class Board {
             }
         }
     }
-
 
     // string representation of this board
     public String toString() {
@@ -110,9 +115,8 @@ public class Board {
     }
 
     // is this board the goal board?
-    // TODO: should this be an '&&' or an '||' ?
     public boolean isGoal() {
-        if (manhattan() == 0 && hamming() == 0) {
+        if (manhattan() == 0 || hamming() == 0) {
             return true;
         }
         return false;
@@ -123,9 +127,7 @@ public class Board {
         if (this == other) return true;
         else if (other == null || this.getClass() != other.getClass()) return false;
         Board boardToCompore = (Board) other;
-        return boardToCompore.dimension() == this.dimension() &&
-                boardToCompore.hamming() == this.hamming() &&
-                boardToCompore.manhattan() == this.manhattan();
+        return (Arrays.deepEquals(this.getCurrentBoard(), boardToCompore.getCurrentBoard()));
     }
 
     // all neighboring boards
