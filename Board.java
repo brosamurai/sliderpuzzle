@@ -4,15 +4,14 @@
  *  Description:
  **************************************************************************** */
 
-import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Stack;
 
 import java.util.Arrays;
 
 public class Board {
-    private int missingTileX;
-    private int missingTileY;
-    private int[][] currentBoard;
+    private final int[][] currentBoard;
+    private int missingTileX = -1;
+    private int missingTileY = -1;
     private int cachedManhattanDistance = -1;
     private int cachedHammingDistance = -1;
 
@@ -21,21 +20,6 @@ public class Board {
     public Board(int[][] tiles) {
         currentBoard = tiles.clone();
         findMissingTile();
-    }
-
-    private int[][] getCurrentBoard() {
-        return currentBoard;
-    }
-
-    private void findMissingTile() {
-        for (int i = 0; i < currentBoard.length; i++) {
-            for (int j = 0; j < currentBoard.length; j++) {
-                if (currentBoard[i][j] == 0) {
-                    missingTileX = i;
-                    missingTileY = j;
-                }
-            }
-        }
     }
 
     // string representation of this board
@@ -93,27 +77,6 @@ public class Board {
         return cachedManhattanDistance;
     }
 
-    private int calcManhattanDistance(int displacedNumber, int currentRow, int currentColumn) {
-        int goalRow = 0;
-        int goalColumn = 0;
-
-        // find the goalRow and goalColumn for our displacedNumber.
-        if (displacedNumber % dimension() == 0) {
-            goalRow = displacedNumber / dimension() - 1;
-            goalColumn = dimension() - 1;
-        }
-        // for every other position
-        else {
-            goalRow = displacedNumber / dimension();
-            goalColumn = (displacedNumber % dimension()) - 1;
-        }
-
-        int distanceFromGoalRow = Math.abs(currentRow - goalRow);
-        int distanceFromGoalColumn = Math.abs(currentColumn - goalColumn);
-
-        return distanceFromGoalColumn + distanceFromGoalRow;
-    }
-
     // is this board the goal board?
     public boolean isGoal() {
         if (manhattan() == 0 || hamming() == 0) {
@@ -147,44 +110,110 @@ public class Board {
         if (neighborAllowedAbove) {
             // exchange missing tile with tile directly above it:
             int[][] neighbor = cloneArray(currentBoard);
+            // move zero tile up <=> move tile above the zero tile down
             neighbor[missingTileX][missingTileY] = neighbor[missingTileX - 1][missingTileY];
             neighbor[missingTileX - 1][missingTileY] = 0;
+
+            Board neighborBoard = new Board(neighbor);
+            if (findGoalRow(currentBoard[missingTileX - 1][missingTileY]) == (missingTileX - 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            }
+            else if (findGoalRow(currentBoard[missingTileX - 1][missingTileY]) > (missingTileX
+                    - 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() - 1;
+            }
+            else neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            neighborBoard.missingTileX = missingTileX - 1;
+            neighborBoard.missingTileY = missingTileY;
             neighbors.push(new Board(neighbor));
         }
 
         if (neighborALlowedBelow) {
             // exchange missing tile with tile directly below it:
             int[][] neighbor = cloneArray(currentBoard);
+            // move zero tile down <=> move tile below the zero tile up
             neighbor[missingTileX][missingTileY] = neighbor[missingTileX + 1][missingTileY];
             neighbor[missingTileX + 1][missingTileY] = 0;
+
+            Board neighborBoard = new Board(neighbor);
+            if (findGoalRow(currentBoard[missingTileX + 1][missingTileY]) == (missingTileX + 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            }
+            else if (findGoalRow(currentBoard[missingTileX + 1][missingTileY]) > (missingTileX
+                    + 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            }
+            else neighborBoard.cachedManhattanDistance = manhattan() - 1;
+            neighborBoard.missingTileX = missingTileX + 1;
+            neighborBoard.missingTileY = missingTileY;
             neighbors.push(new Board(neighbor));
         }
 
         if (neighborAllowedLeft) {
             // exchange missing tile with tile directly left of it:
             int[][] neighbor = cloneArray(currentBoard);
+            // move zero tile to the left <=> left tile moves right
             neighbor[missingTileX][missingTileY] = neighbor[missingTileX][missingTileY - 1];
             neighbor[missingTileX][missingTileY - 1] = 0;
+
+            Board neighborBoard = new Board(neighbor);
+            if (findGoalCol(currentBoard[missingTileX][missingTileY - 1]) == (missingTileY - 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            }
+            else if (findGoalCol(currentBoard[missingTileX][missingTileY - 1]) > (missingTileY
+                    - 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() - 1;
+            }
+            else neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            neighborBoard.missingTileX = missingTileX;
+            neighborBoard.missingTileY = missingTileY - 1;
             neighbors.push(new Board(neighbor));
         }
 
         if (neighborAllowedRight) {
             // exchange missing tile with tile directly to right:
             int[][] neighbor = cloneArray(currentBoard);
+            // missing tile moves right <=> right tile moves left
             neighbor[missingTileX][missingTileY] = neighbor[missingTileX][missingTileY + 1];
             neighbor[missingTileX][missingTileY + 1] = 0;
+
+            Board neighborBoard = new Board(neighbor);
+            if (findGoalCol(currentBoard[missingTileX][missingTileY + 1]) == (missingTileY + 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            }
+            else if (findGoalCol(currentBoard[missingTileX][missingTileY + 1]) > (missingTileY
+                    + 1)) {
+                neighborBoard.cachedManhattanDistance = manhattan() + 1;
+            }
+            else neighborBoard.cachedManhattanDistance = manhattan() - 1;
             neighbors.push(new Board(neighbor));
+            neighborBoard.missingTileX = missingTileX;
+            neighborBoard.missingTileY = missingTileY + 1;
         }
 
         return neighbors;
     }
 
-    private int[][] cloneArray(int[][] arrayToCopy) {
-        int[][] neighbor = new int[arrayToCopy.length][];
-        for (int i = 0; i < arrayToCopy.length; i++) {
-            neighbor[i] = arrayToCopy[i].clone();
+    private int findGoalRow(int displacedNumber) {
+        // find the goalRow and goalColumn for our displacedNumber.
+        if (displacedNumber % dimension() == 0) {
+            return displacedNumber / dimension() - 1;
         }
-        return neighbor;
+        // for every other position
+        else {
+            return displacedNumber / dimension();
+        }
+    }
+
+    private int findGoalCol(int displacedNumber) {
+        // find the goalRow and goalColumn for our displacedNumber.
+        if (displacedNumber % dimension() == 0) {
+            return dimension() - 1;
+        }
+        // for every other position
+        else {
+            return (displacedNumber % dimension()) - 1;
+        }
     }
 
     // a board that is obtained by exchanging any pair of tiles
@@ -201,26 +230,43 @@ public class Board {
 
     // unit testing (ungraded)
     public static void main(String[] args) {
-        // for each command-line argument
-        for (String filename : args) {
+    }
 
-            // read in the board specified in the filename
-            In in = new In(filename);
-            int n = in.readInt();
-            int[][] tiles = new int[n][n];
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    tiles[i][j] = in.readInt();
+    private int[][] getCurrentBoard() {
+        return currentBoard;
+    }
+
+    private void findMissingTile() {
+        if (missingTileX == -1) {
+            for (int i = 0; i < currentBoard.length; i++) {
+                for (int j = 0; j < currentBoard.length; j++) {
+                    if (currentBoard[i][j] == 0) {
+                        missingTileX = i;
+                        missingTileY = j;
+                    }
                 }
             }
-
-            // solve the slider puzzle
-            Board initial = new Board(tiles);
-            String stringRep = initial.toString();
-            System.out.println(stringRep);
-            initial.hamming();
-            // Solver solver = new Solver(initial);
-            // StdOut.println(filename + ": " + solver.moves());
         }
+    }
+
+    private int[][] cloneArray(int[][] arrayToCopy) {
+        int[][] neighbor = new int[arrayToCopy.length][];
+        for (int i = 0; i < arrayToCopy.length; i++) {
+            neighbor[i] = arrayToCopy[i].clone();
+        }
+        return neighbor;
+    }
+
+    private int calcManhattanDistance(int displacedNumber, int currentRow, int currentColumn) {
+        int goalRow;
+        int goalColumn;
+
+        goalRow = findGoalRow(displacedNumber);
+        goalColumn = findGoalCol(displacedNumber);
+
+        int distanceFromGoalRow = Math.abs(currentRow - goalRow);
+        int distanceFromGoalColumn = Math.abs(currentColumn - goalColumn);
+
+        return distanceFromGoalColumn + distanceFromGoalRow;
     }
 }
